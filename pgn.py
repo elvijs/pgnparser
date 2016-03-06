@@ -40,6 +40,7 @@ The basic usage::
 
 '''
 
+
 class PGNGame(object):
     '''
     Describes a single chess game in PGN format.
@@ -49,13 +50,13 @@ class PGNGame(object):
                  'Annotator', 'PlyCount', 'TimeControl', 'Time', 'Termination',
                  'Mode', 'FEN']
 
-    def __init__(self, event=None, site=None, date=None, round=None, 
-                                                         white=None,
-                                                         black=None,
-                                                         result=None):
-        '''
+    def __init__(self, event=None, site=None, date=None, round=None,
+                 white=None,
+                 black=None,
+                 result=None):
+        """
         Initializes the PGNGame, receiving the requireds tags.
-        '''
+        """
         self.event = event
         self.site = site
         self.date = date
@@ -72,12 +73,32 @@ class PGNGame(object):
         self.fen = None
 
         self.moves = []
-    
+
     def dumps(self):
         return dumps(self)
 
     def __repr__(self):
         return '<PGNGame "%s" vs "%s">' % (self.white, self.black)
+
+    def to_dict(self):
+        return dict(
+            event=self.event,
+            site=self.site,
+            date=self.date,
+            round=self.round,
+            white=self.white,
+            black=self.black,
+            result=self.result,
+            annotator=self.annotator,
+            plycount=self.plycount,
+            timecontrol=self.timecontrol,
+            time=self.time,
+            termination=self.termination,
+            mode=self.mode,
+            fen=self.fen,
+            moves=self.moves
+        )
+
 
 class GameStringIterator(object):
     """
@@ -94,35 +115,34 @@ class GameStringIterator(object):
         self.file_iter = iter(open(self.file_name))
         self.game_lines = []
         self.end = False
+        self.count = 0
 
     def __iter__(self):
         """doc"""
         return self
 
-    def next(self):
+    def __next__(self):
         """doc"""
+        self.count += 1
         if self.end is True:
             raise StopIteration
         try:
             while True:
-                line = self.file_iter.next()
-                if line.startswith("[Event"):
+                line = self.file_iter.__next__()
+                if line.startswith("[Event "):
                     if len(self.game_lines) == 0:
                         self.game_lines.append(line)
                         continue
                     else:
-                        game_lines = self.game_lines[:]
-                        self.game_lines = []
-                        self.game_lines.append(line)
-                        game_str = "".join(game_lines)
+                        game_str = "".join(self.game_lines)
+                        self.game_lines = [line]
                         return game_str
                 else:
                     self.game_lines.append(line)
         except StopIteration:
-            game_lines = self.game_lines[:]
-            game_str = "".join(game_lines)
             self.end = True
-            return game_str
+            return "".join(self.game_lines)
+
 
 class GameIterator(object):
     """
@@ -140,26 +160,27 @@ class GameIterator(object):
         """doc"""
         return self
 
-    def next(self):
+    def __next__(self):
         """doc"""
-        for game_str in self.game_str_iterator:
-            game = loads(game_str)[0]
-            return game
+        game_str = self.game_str_iterator.__next__()
+        return loads(game_str)[0]
+
 
 def _pre_process_text(text):
-    '''
-    This function is responsible for removal of end line commentarys 
-    (;commentary), blank lines and aditional spaces. Also, it converts 
+    """
+    This function is responsible for removal of end line commentaries
+    (;commentary), blank lines and additional spaces. Also, it converts
     ``\\r\\n`` to ``\\n``.
-    '''
+    """
     text = re.sub(r'\s*(\\r)?\\n\s*', '\n', text.strip())
     lines = []
     for line in text.split('\n'):
         line = re.sub(r'(\s*;.*|^\s*)', '', line)
         if line:
             lines.append(line)
-    
+
     return lines
+
 
 def _next_token(lines):
     '''
@@ -172,14 +193,15 @@ def _next_token(lines):
     if not lines:
         return None
 
-    token = lines.pop(0).strip() 
+    token = lines.pop(0).strip()
     if token.startswith('['):
         return token
 
     while lines and not lines[0].startswith('['):
-        token += ' '+lines.pop(0).strip()
-    
+        token += ' ' + lines.pop(0).strip()
+
     return token.strip()
+
 
 def _parse_tag(token):
     '''
@@ -187,6 +209,7 @@ def _parse_tag(token):
     '''
     tag, value = re.match(r'\[(\w*)\s*(.+)', token).groups()
     return tag.lower(), value.strip('"[] ')
+
 
 def _parse_moves(token):
     '''
@@ -197,7 +220,7 @@ def _parse_moves(token):
         token = re.sub(r'^\s*(\d+\.+\s*)?', '', token)
 
         if token.startswith('{'):
-            pos = token.find('}')+1
+            pos = token.find('}') + 1
         else:
             pos1 = token.find(' ')
             pos2 = token.find('{')
@@ -214,8 +237,9 @@ def _parse_moves(token):
         else:
             moves.append(token)
             token = ''
-    
+
     return moves
+
 
 def loads(text):
     '''
@@ -240,8 +264,9 @@ def loads(text):
             setattr(game, tag, value)
         else:
             game.moves = _parse_moves(token)
-    
+
     return games
+
 
 def dumps(games):
     '''
@@ -260,18 +285,17 @@ def dumps(games):
             elif i <= 6:
                 dump += '[%s "?"]\n' % tag
 
-        
         dump += '\n'
         i = 0
         for move in game.moves:
             if not move.startswith('{'):
-                if i%2 == 0:
-                    dump += str(i/2+1)+'. '
-                
+                if i % 2 == 0:
+                    dump += str(i / 2 + 1) + '. '
+
                 i += 1
 
             dump += move + ' '
-            
+
         all_dumps.append(dump.strip())
-            
+
     return '\n\n\n'.join(all_dumps)
