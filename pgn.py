@@ -20,6 +20,7 @@
 # SOFTWARE.
 
 import re
+import dateutil.parser
 
 '''
 A simple PGN parser.
@@ -84,8 +85,8 @@ class PGNGame(object):
         return dict(
             event=self.event,
             site=self.site,
-            date=self.date,
-            round=self.round,
+            date=dateutil.parser.parse(self.date),
+            round=int(self.round) if self.round else None,
             white=self.white,
             black=self.black,
             result=self.result,
