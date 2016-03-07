@@ -72,6 +72,10 @@ class PGNGame(object):
         self.termination = None
         self.mode = None
         self.fen = None
+        self.eco = None
+        self.whiteelo = None
+        self.blackelo = None
+        self.eventdate = None
 
         self.moves = []
 
@@ -86,7 +90,7 @@ class PGNGame(object):
             event=self.event,
             site=self.site,
             date=dateutil.parser.parse(self.date),
-            round=int(self.round) if self.round else None,
+            round=self.round,
             white=self.white,
             black=self.black,
             result=self.result,
@@ -97,6 +101,10 @@ class PGNGame(object):
             termination=self.termination,
             mode=self.mode,
             fen=self.fen,
+            eco=self.eco,
+            whiteelo=int(self.whiteelo) if self.whiteelo else None,
+            blackelo=int(self.blackelo) if self.blackelo else None,
+            eventdate=dateutil.parser.parse(self.eventdate),
             moves=self.moves
         )
 
