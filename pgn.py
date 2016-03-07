@@ -49,7 +49,7 @@ class PGNGame(object):
 
     TAG_ORDER = ['Event', 'Site', 'Date', 'Round', 'White', 'Black', 'Result',
                  'Annotator', 'PlyCount', 'TimeControl', 'Time', 'Termination',
-                 'Mode', 'FEN']
+                 'Mode', 'FEN', 'ECO', 'WhiteElo', 'BlackElo', 'EventDate']
 
     def __init__(self, event=None, site=None, date=None, round=None,
                  white=None,
