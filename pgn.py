@@ -86,10 +86,9 @@ class PGNGame(object):
         return '<PGNGame "%s" vs "%s">' % (self.white, self.black)
 
     def to_dict(self):
-        return dict(
+        ret = dict(
             event=self.event,
             site=self.site,
-            date=dateutil.parser.parse(self.date),
             round=self.round,
             white=self.white,
             black=self.black,
@@ -102,11 +101,35 @@ class PGNGame(object):
             mode=self.mode,
             fen=self.fen,
             eco=self.eco,
-            whiteelo=int(self.whiteelo) if self.whiteelo else None,
-            blackelo=int(self.blackelo) if self.blackelo else None,
-            eventdate=dateutil.parser.parse(self.eventdate),
             moves=self.moves
         )
+        ret['date'] = self.date
+        if self.date:
+            try:
+                self.date = self.date.replace('??', '01')
+                ret['date'] = dateutil.parser.parse(self.date)
+            except ValueError:
+                print("Couldn't parse {} to date".format(self.date))
+
+        ret['eventdate'] = self.eventdate
+        if self.eventdate:
+            try:
+                self.eventdate = self.eventdate.replace('??', '01')
+                ret['eventdate'] = dateutil.parser.parse(self.eventdate)
+            except ValueError:
+                print("Couldn't parse {} to date".format(self.eventdate))
+
+        if (not self.whiteelo) or '?' in self.whiteelo:
+            ret['whiteelo'] = "unknown"
+        else:
+            ret['whiteelo'] = int(self.whiteelo)
+
+        if (not self.blackelo) or '?' in self.blackelo:
+            ret['blackelo'] = "unknown"
+        else:
+            ret['blackelo'] = int(self.blackelo)
+
+        return ret
 
 
 class GameStringIterator(object):
